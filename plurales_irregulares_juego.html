@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Plurales Irregulares — Juego</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --purple: #7C5CBF;
+    --purple-light: #EDE8F9;
+    --teal: #1B9E75;
+    --teal-light: #DCF5EC;
+    --coral: #E05A2B;
+    --coral-light: #FCEAE3;
+    --amber: #D4860F;
+    --amber-light: #FEF3DC;
+    --bg: #F7F4FF;
+    --card: #ffffff;
+    --border: #DDD6F5;
+    --text: #1E1640;
+    --text-muted: #7B70A3;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Nunito', sans-serif;
+    background: var(--bg);
+    min-height: 100vh;
+    color: var(--text);
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  /* ── Header ── */
+  header {
+    background: var(--purple);
+    padding: 1rem 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .game-title {
+    font-family: 'Fredoka One', cursive;
+    font-size: 2rem;
+    color: #fff;
+    letter-spacing: 0.02em;
+  }
+
+  .meta {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+
+  .round-badge {
+    background: rgba(255,255,255,0.2);
+    color: #fff;
+    font-size: 1rem;
+    font-weight: 700;
+    padding: 6px 16px;
+    border-radius: 20px;
+  }
+
+  .score-display {
+    background: var(--amber);
+    color: #fff;
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.1rem;
+    padding: 6px 16px;
+    border-radius: 20px;
+    min-width: 80px;
+    text-align: center;
+  }
+
+  /* ── Rule banner ── */
+  .rule-banner {
+    text-align: center;
+    padding: 0.75rem 2rem;
+    font-size: 1.05rem;
+    font-weight: 600;
+    background: var(--purple-light);
+    border-bottom: 2px solid var(--border);
+    color: var(--purple);
+    min-height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .rule-pill {
+    font-size: 0.85rem;
+    padding: 2px 10px;
+    border-radius: 12px;
+    font-weight: 700;
+  }
+  .r-z    { background: #EDE8F9; color: #5B3FA8; }
+  .r-cons { background: #DCF5EC; color: #0F6E56; }
+  .r-dia  { background: #FCEAE3; color: #993C1D; }
+  .r-mix  { background: #FEF3DC; color: #9A5E08; }
+
+  /* ── Game area ── */
+  .game-area {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    padding: 2rem;
+    max-width: 900px;
+    margin: 0 auto;
+    min-height: calc(100vh - 180px);
+    align-content: start;
+  }
+
+  .column-label {
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-muted);
+    margin-bottom: 12px;
+    text-align: center;
+  }
+
+  /* ── Word cards ── */
+  .word-card {
+    background: var(--card);
+    border: 2.5px solid var(--border);
+    border-radius: 16px;
+    padding: 1rem 1.5rem;
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.6rem;
+    text-align: center;
+    margin-bottom: 12px;
+    cursor: grab;
+    transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s, background 0.15s;
+    position: relative;
+    min-height: 70px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .word-card:hover:not(.locked):not(.dragging) {
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: 0 8px 24px rgba(124,92,191,0.18);
+    border-color: var(--purple);
+  }
+
+  .word-card.dragging {
+    opacity: 0.4;
+    cursor: grabbing;
+  }
+
+  .word-card.locked {
+    background: var(--teal-light);
+    border-color: var(--teal);
+    color: var(--teal);
+    cursor: default;
+  }
+
+  .word-card.locked::after {
+    content: '✓';
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 1.2rem;
+    color: var(--teal);
+    font-family: sans-serif;
+  }
+
+  .word-card.shake {
+    animation: shake 0.35s ease;
+    border-color: var(--coral);
+    background: var(--coral-light);
+    color: var(--coral);
+  }
+
+  @keyframes shake {
+    0%,100% { transform: translateX(0); }
+    20%  { transform: translateX(-8px); }
+    40%  { transform: translateX(8px); }
+    60%  { transform: translateX(-6px); }
+    80%  { transform: translateX(6px); }
+  }
+
+  /* ── Drop zones ── */
+  .drop-zone {
+    border: 2.5px dashed var(--border);
+    border-radius: 16px;
+    padding: 1rem 1.5rem;
+    min-height: 70px;
+    margin-bottom: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    transition: border-color 0.15s, background 0.15s;
+    position: relative;
+  }
+
+  .drop-zone .plural-label {
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.6rem;
+    color: var(--text);
+  }
+
+  .drop-zone .rule-hint {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    margin-top: 2px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  .drop-zone.drag-over {
+    border-color: var(--purple);
+    background: var(--purple-light);
+  }
+
+  .drop-zone.matched {
+    border-style: solid;
+    border-color: var(--teal);
+    background: var(--teal-light);
+  }
+
+  .drop-zone.matched .plural-label { color: var(--teal); }
+
+  .drop-zone.matched .rule-hint { display: none; }
+
+  .drop-zone.matched::after {
+    content: '✓';
+    position: absolute;
+    right: 14px;
+    font-size: 1.2rem;
+    color: var(--teal);
+  }
+
+  .drop-zone.wrong-flash {
+    border-color: var(--coral);
+    background: var(--coral-light);
+    animation: flashBack 0.5s ease forwards;
+  }
+
+  @keyframes flashBack {
+    0%   { background: var(--coral-light); border-color: var(--coral); }
+    100% { background: transparent; border-color: var(--border); }
+  }
+
+  /* ── Floating drag ghost ── */
+  #drag-ghost {
+    position: fixed;
+    pointer-events: none;
+    background: var(--purple);
+    color: #fff;
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.4rem;
+    padding: 0.7rem 1.5rem;
+    border-radius: 14px;
+    box-shadow: 0 12px 32px rgba(124,92,191,0.4);
+    z-index: 9999;
+    transform: translate(-50%, -50%) rotate(-3deg) scale(1.06);
+    display: none;
+    white-space: nowrap;
+  }
+
+  /* ── Celebration overlay ── */
+  .overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(30,22,64,0.85);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+  }
+
+  .overlay.visible {
+    opacity: 1;
+    pointer-events: all;
+  }
+
+  .overlay-box {
+    background: var(--card);
+    border-radius: 24px;
+    padding: 3rem 3.5rem;
+    text-align: center;
+    max-width: 420px;
+    width: 90%;
+  }
+
+  .overlay-emoji { font-size: 4rem; margin-bottom: 0.5rem; }
+
+  .overlay-title {
+    font-family: 'Fredoka One', cursive;
+    font-size: 2.2rem;
+    color: var(--purple);
+    margin-bottom: 0.5rem;
+  }
+
+  .overlay-sub {
+    font-size: 1.05rem;
+    color: var(--text-muted);
+    margin-bottom: 1.5rem;
+  }
+
+  .overlay-score {
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.6rem;
+    color: var(--amber);
+    margin-bottom: 1.5rem;
+  }
+
+  .btn-next {
+    background: var(--purple);
+    color: #fff;
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.3rem;
+    border: none;
+    padding: 0.85rem 2.5rem;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+    box-shadow: 0 4px 16px rgba(124,92,191,0.35);
+    letter-spacing: 0.02em;
+  }
+
+  .btn-next:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(124,92,191,0.4); }
+  .btn-next:active { transform: scale(0.97); }
+
+  /* confetti */
+  .confetti-piece {
+    position: fixed;
+    width: 12px;
+    height: 12px;
+    border-radius: 2px;
+    opacity: 0;
+    pointer-events: none;
+    z-index: 999;
+    animation: confettiFall linear forwards;
+  }
+
+  @keyframes confettiFall {
+    0%   { opacity: 1; transform: translateY(0) rotate(0deg); }
+    100% { opacity: 0; transform: translateY(100vh) rotate(720deg); }
+  }
+
+  /* ── Responsive ── */
+  @media (max-width: 600px) {
+    .game-title { font-size: 1.4rem; }
+    .game-area { grid-template-columns: 1fr; gap: 0; padding: 1rem; }
+    .word-card, .drop-zone .plural-label { font-size: 1.3rem; }
+    .overlay-box { padding: 2rem 1.5rem; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="game-title">🎮 Plurales Irregulares</div>
+  <div class="meta">
+    <div class="round-badge" id="round-badge">Ronda 1 de 3</div>
+    <div class="score-display">⭐ <span id="score">0</span></div>
+  </div>
+</header>
+
+<div class="rule-banner" id="rule-banner"></div>
+
+<div class="game-area">
+  <div>
+    <div class="column-label">Singular — arrastra</div>
+    <div id="singulars-col"></div>
+  </div>
+  <div>
+    <div class="column-label">Plural — suelta aquí</div>
+    <div id="plurals-col"></div>
+  </div>
+</div>
+
+<div id="drag-ghost"></div>
+
+<div class="overlay" id="overlay">
+  <div class="overlay-box">
+    <div class="overlay-emoji" id="ov-emoji">🎉</div>
+    <div class="overlay-title" id="ov-title">¡Excelente!</div>
+    <div class="overlay-sub" id="ov-sub">Completaste la ronda</div>
+    <div class="overlay-score" id="ov-score"></div>
+    <button class="btn-next" id="btn-next">Siguiente ronda →</button>
+  </div>
+</div>
+
+<script>
+const ROUNDS = [
+  {
+    label: 'Reglas: <span class="rule-pill r-z">-z → ces</span> y <span class="rule-pill r-cons">consonante → -es</span>',
+    pairs: [
+      { s: 'pez',    p: 'peces',    rule: '-z → ces' },
+      { s: 'lápiz',  p: 'lápices',  rule: '-z → ces' },
+      { s: 'árbol',  p: 'árboles',  rule: '+ es' },
+      { s: 'flor',   p: 'flores',   rule: '+ es' },
+      { s: 'voz',    p: 'voces',    rule: '-z → ces' },
+    ]
+  },
+  {
+    label: 'Reglas: <span class="rule-pill r-dia">días de la semana</span> y <span class="rule-pill r-cons">consonante → -es</span>',
+    pairs: [
+      { s: 'el lunes',   p: 'los lunes',   rule: 'no cambia' },
+      { s: 'el martes',  p: 'los martes',  rule: 'no cambia' },
+      { s: 'el viernes', p: 'los viernes', rule: 'no cambia' },
+      { s: 'ciudad',     p: 'ciudades',    rule: '+ es' },
+      { s: 'color',      p: 'colores',     rule: '+ es' },
+    ]
+  },
+  {
+    label: 'Reglas: <span class="rule-pill r-z">-z → ces</span>, <span class="rule-pill r-cons">consonante → -es</span> y <span class="rule-pill r-dia">días</span>',
+    pairs: [
+      { s: 'luz',        p: 'luces',       rule: '-z → ces' },
+      { s: 'nariz',      p: 'narices',     rule: '-z → ces' },
+      { s: 'papel',      p: 'papeles',     rule: '+ es' },
+      { s: 'el jueves',  p: 'los jueves',  rule: 'no cambia' },
+      { s: 'vez',        p: 'veces',       rule: '-z → ces' },
+    ]
+  }
+];
+
+let currentRound = 0;
+let score = 0;
+let matched = 0;
+let draggedId = null;
+
+const singularsCol = document.getElementById('singulars-col');
+const pluralsCol   = document.getElementById('plurals-col');
+const ghost        = document.getElementById('drag-ghost');
+const overlay      = document.getElementById('overlay');
+
+function shuffle(arr) {
+  return [...arr].sort(() => Math.random() - 0.5);
+}
+
+function buildRound(roundIdx) {
+  singularsCol.innerHTML = '';
+  pluralsCol.innerHTML = '';
+  matched = 0;
+
+  const round = ROUNDS[roundIdx];
+  document.getElementById('rule-banner').innerHTML = round.label;
+  document.getElementById('round-badge').textContent = `Ronda ${roundIdx+1} de ${ROUNDS.length}`;
+
+  const shuffledPlurals = shuffle(round.pairs);
+
+  round.pairs.forEach((pair, i) => {
+    // Singular card
+    const card = document.createElement('div');
+    card.className = 'word-card';
+    card.textContent = pair.s;
+    card.dataset.id = i;
+    singularsCol.appendChild(card);
+
+    // Drop zone
+    const zone = document.createElement('div');
+    zone.className = 'drop-zone';
+    zone.dataset.id = shuffledPlurals.indexOf(pair); // will be set by plural order
+    zone.innerHTML = `<span class="plural-label">${shuffledPlurals.findIndex(p=>p===pair) >= 0 ? '' : ''}</span>`;
+    pluralsCol.appendChild(zone);
+  });
+
+  // Re-build zones in shuffled order
+  pluralsCol.innerHTML = '';
+  shuffledPlurals.forEach((pair, idx) => {
+    const correctId = round.pairs.indexOf(pair);
+    const zone = document.createElement('div');
+    zone.className = 'drop-zone';
+    zone.dataset.correctId = correctId;
+    zone.innerHTML = `<span class="plural-label">${pair.p}</span><span class="rule-hint">${pair.rule}</span>`;
+    pluralsCol.appendChild(zone);
+  });
+
+  attachDragListeners();
+}
+
+function attachDragListeners() {
+  // Mouse drag
+  singularsCol.querySelectorAll('.word-card').forEach(card => {
+    card.addEventListener('mousedown', onMouseDown);
+    card.addEventListener('touchstart', onTouchStart, { passive: true });
+  });
+
+  pluralsCol.querySelectorAll('.drop-zone').forEach(zone => {
+    zone.addEventListener('dragover', e => e.preventDefault());
+    zone.addEventListener('mouseenter', () => {
+      if (draggedId !== null && !zone.classList.contains('matched')) zone.classList.add('drag-over');
+    });
+    zone.addEventListener('mouseleave', () => zone.classList.remove('drag-over'));
+  });
+}
+
+// ── Mouse drag ──────────────────────────────
+let ghostOffX = 0, ghostOffY = 0;
+
+function onMouseDown(e) {
+  const card = e.currentTarget;
+  if (card.classList.contains('locked')) return;
+  draggedId = card.dataset.id;
+  card.classList.add('dragging');
+  ghost.textContent = card.textContent;
+  ghost.style.display = 'block';
+  moveGhost(e.clientX, e.clientY);
+
+  document.addEventListener('mousemove', onMouseMove);
+  document.addEventListener('mouseup', onMouseUp);
+}
+
+function onMouseMove(e) {
+  moveGhost(e.clientX, e.clientY);
+  highlightZone(e.clientX, e.clientY);
+}
+
+function onMouseUp(e) {
+  ghost.style.display = 'none';
+  document.removeEventListener('mousemove', onMouseMove);
+  document.removeEventListener('mouseup', onMouseUp);
+
+  const zone = getZoneAt(e.clientX, e.clientY);
+  handleDrop(zone);
+  clearZoneHighlights();
+}
+
+// ── Touch drag ──────────────────────────────
+function onTouchStart(e) {
+  const card = e.currentTarget;
+  if (card.classList.contains('locked')) return;
+  draggedId = card.dataset.id;
+  card.classList.add('dragging');
+  ghost.textContent = card.textContent;
+  ghost.style.display = 'block';
+
+  const t = e.touches[0];
+  moveGhost(t.clientX, t.clientY);
+
+  document.addEventListener('touchmove', onTouchMove, { passive: false });
+  document.addEventListener('touchend', onTouchEnd);
+}
+
+function onTouchMove(e) {
+  e.preventDefault();
+  const t = e.touches[0];
+  moveGhost(t.clientX, t.clientY);
+  highlightZone(t.clientX, t.clientY);
+}
+
+function onTouchEnd(e) {
+  ghost.style.display = 'none';
+  document.removeEventListener('touchmove', onTouchMove);
+  document.removeEventListener('touchend', onTouchEnd);
+
+  const t = e.changedTouches[0];
+  const zone = getZoneAt(t.clientX, t.clientY);
+  handleDrop(zone);
+  clearZoneHighlights();
+}
+
+// ── Helpers ──────────────────────────────────
+function moveGhost(x, y) {
+  ghost.style.left = x + 'px';
+  ghost.style.top  = y + 'px';
+}
+
+function getZoneAt(x, y) {
+  const zones = pluralsCol.querySelectorAll('.drop-zone');
+  for (const z of zones) {
+    const r = z.getBoundingClientRect();
+    if (x >= r.left && x <= r.right && y >= r.top && y <= r.bottom) return z;
+  }
+  return null;
+}
+
+function highlightZone(x, y) {
+  clearZoneHighlights();
+  const zone = getZoneAt(x, y);
+  if (zone && !zone.classList.contains('matched')) zone.classList.add('drag-over');
+}
+
+function clearZoneHighlights() {
+  pluralsCol.querySelectorAll('.drop-zone').forEach(z => z.classList.remove('drag-over'));
+}
+
+function handleDrop(zone) {
+  const card = singularsCol.querySelector(`.word-card[data-id="${draggedId}"]`);
+  if (!card) { draggedId = null; return; }
+  card.classList.remove('dragging');
+
+  if (!zone || zone.classList.contains('matched')) {
+    draggedId = null;
+    return;
+  }
+
+  const correctId = parseInt(zone.dataset.correctId);
+  const cardId    = parseInt(draggedId);
+
+  if (correctId === cardId) {
+    // Correct!
+    card.classList.add('locked');
+    zone.classList.add('matched');
+    score += 10;
+    document.getElementById('score').textContent = score;
+    matched++;
+
+    if (matched === ROUNDS[currentRound].pairs.length) {
+      setTimeout(showRoundEnd, 500);
+    }
+  } else {
+    // Wrong
+    card.classList.add('shake');
+    zone.classList.add('wrong-flash');
+    setTimeout(() => {
+      card.classList.remove('shake');
+      zone.classList.remove('wrong-flash');
+    }, 500);
+  }
+
+  draggedId = null;
+}
+
+function showRoundEnd() {
+  const isLast = currentRound === ROUNDS.length - 1;
+  document.getElementById('ov-emoji').textContent  = isLast ? '🏆' : '🎉';
+  document.getElementById('ov-title').textContent  = isLast ? '¡Campeón/a!' : '¡Ronda completada!';
+  document.getElementById('ov-sub').textContent    = isLast
+    ? 'Completaste todas las rondas'
+    : `Ronda ${currentRound+1} de ${ROUNDS.length} — ¡Sigue así!`;
+  document.getElementById('ov-score').textContent  = `⭐ ${score} puntos`;
+  document.getElementById('btn-next').textContent  = isLast ? '🔄 Jugar de nuevo' : 'Siguiente ronda →';
+  overlay.classList.add('visible');
+  launchConfetti();
+}
+
+document.getElementById('btn-next').addEventListener('click', () => {
+  overlay.classList.remove('visible');
+  currentRound = (currentRound + 1) % ROUNDS.length;
+  if (currentRound === 0) score = 0, document.getElementById('score').textContent = score;
+  buildRound(currentRound);
+});
+
+// ── Confetti ──────────────────────────────────
+const COLORS = ['#7C5CBF','#1B9E75','#E05A2B','#D4860F','#E24B4A','#1D9E75'];
+
+function launchConfetti() {
+  for (let i = 0; i < 60; i++) {
+    const el = document.createElement('div');
+    el.className = 'confetti-piece';
+    el.style.left   = Math.random() * 100 + 'vw';
+    el.style.top    = '-20px';
+    el.style.background = COLORS[Math.floor(Math.random()*COLORS.length)];
+    el.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+    el.style.animationDuration = (1.5 + Math.random() * 2) + 's';
+    el.style.animationDelay = (Math.random() * 0.8) + 's';
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 4000);
+  }
+}
+
+// ── Init ──────────────────────────────────────
+buildRound(0);
+</script>
+</body>
+</html>
