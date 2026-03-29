@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Escape Room — La Misión de las Decisiones</title>
+<link href="https://fonts.googleapis.com/css2?family=Bangers&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#0f0c29; --panel:#1a1745; --card:#231f5c;
+    --accent:#f7c948; --accent2:#ff6b6b;
+    --green:#43e97b; --blue:#38c5f5; --purple:#a78bfa;
+    --text:#f0eeff; --muted:#9d97cc; --radius:16px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;}
+  body::before{content:'';position:fixed;inset:0;z-index:0;
+    background-image:
+      radial-gradient(1px 1px at 10% 20%,rgba(255,255,255,.5) 0%,transparent 100%),
+      radial-gradient(1px 1px at 30% 60%,rgba(255,255,255,.3) 0%,transparent 100%),
+      radial-gradient(1px 1px at 55% 15%,rgba(255,255,255,.4) 0%,transparent 100%),
+      radial-gradient(1px 1px at 75% 45%,rgba(255,255,255,.35) 0%,transparent 100%),
+      radial-gradient(1px 1px at 88% 80%,rgba(255,255,255,.4) 0%,transparent 100%),
+      radial-gradient(2px 2px at 45% 90%,rgba(247,201,72,.6) 0%,transparent 100%),
+      radial-gradient(2px 2px at 92% 10%,rgba(247,201,72,.5) 0%,transparent 100%);
+    pointer-events:none;}
+  .wrapper{position:relative;z-index:1;max-width:780px;margin:0 auto;padding:24px 20px 60px;}
+
+  /* Progress */
+  .progress-bar{display:flex;align-items:center;gap:8px;margin-bottom:28px;background:var(--panel);border-radius:40px;padding:8px 16px;border:1px solid rgba(167,139,250,.2);}
+  .progress-label{font-size:13px;color:var(--muted);font-weight:700;white-space:nowrap;}
+  .progress-track{flex:1;height:8px;background:rgba(255,255,255,.08);border-radius:4px;overflow:hidden;}
+  .progress-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--purple),var(--blue));transition:width .6s ease;}
+  .progress-pct{font-size:13px;color:var(--accent);font-weight:800;min-width:36px;text-align:right;}
+
+  /* Screens */
+  .screen{display:none;animation:fadeUp .45s ease both;}
+  .screen.active{display:block;}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+
+  /* Intro */
+  .intro-hero{text-align:center;padding:40px 20px 32px;background:var(--panel);border-radius:var(--radius);border:1px solid rgba(167,139,250,.25);margin-bottom:24px;position:relative;overflow:hidden;}
+  .intro-hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 0%,rgba(167,139,250,.18) 0%,transparent 70%);pointer-events:none;}
+  .badge{display:inline-block;font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;padding:4px 14px;border-radius:20px;margin-bottom:16px;background:rgba(167,139,250,.18);color:var(--purple);border:1px solid rgba(167,139,250,.3);}
+  .intro-hero h1{font-family:'Bangers',cursive;font-size:clamp(38px,8vw,60px);letter-spacing:.04em;line-height:1.05;color:var(--accent);text-shadow:0 0 30px rgba(247,201,72,.4);margin-bottom:8px;}
+  .intro-hero .subtitle{font-size:16px;color:var(--muted);margin-bottom:24px;}
+  .emoji-row{font-size:36px;margin-bottom:20px;letter-spacing:8px;}
+  .mission-card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:20px 24px;margin-bottom:24px;text-align:left;}
+  .mission-card h3{font-size:13px;text-transform:uppercase;letter-spacing:.12em;color:var(--accent);margin-bottom:10px;}
+  .mission-card p{font-size:15px;color:#d4cfff;line-height:1.6;}
+  .mission-card p+p{margin-top:8px;}
+  .name-row{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-bottom:8px;}
+  .name-row input{flex:1;min-width:200px;max-width:320px;background:rgba(255,255,255,.07);border:1.5px solid rgba(167,139,250,.3);border-radius:10px;padding:12px 16px;font-size:15px;color:var(--text);font-family:'Nunito',sans-serif;outline:none;transition:border-color .2s;}
+  .name-row input::placeholder{color:var(--muted);}
+  .name-row input:focus{border-color:var(--purple);}
+
+  /* Buttons */
+  .btn{display:inline-flex;align-items:center;gap:8px;padding:13px 28px;border-radius:12px;font-family:'Nunito',sans-serif;font-size:16px;font-weight:800;cursor:pointer;border:none;transition:transform .15s,box-shadow .15s;letter-spacing:.02em;}
+  .btn:hover{transform:translateY(-2px);}
+  .btn:active{transform:translateY(0);}
+  .btn-primary{background:linear-gradient(135deg,#a78bfa,#38c5f5);color:#0f0c29;box-shadow:0 4px 20px rgba(167,139,250,.35);}
+  .btn-yellow{background:linear-gradient(135deg,#f7c948,#ff9f43);color:#0f0c29;box-shadow:0 4px 20px rgba(247,201,72,.35);}
+  .btn-green{background:linear-gradient(135deg,#43e97b,#38c5f5);color:#0f0c29;box-shadow:0 4px 20px rgba(67,233,123,.3);}
+
+  /* Level header */
+  .level-header{display:flex;align-items:center;gap:14px;background:var(--panel);border-radius:var(--radius);border:1px solid rgba(255,255,255,.08);padding:16px 20px;margin-bottom:20px;}
+  .level-icon{width:52px;height:52px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0;}
+  .level-header-text h2{font-family:'Bangers',cursive;font-size:22px;letter-spacing:.05em;color:var(--accent);line-height:1.1;}
+  .level-header-text p{font-size:13px;color:var(--muted);margin-top:2px;}
+
+  /* Story */
+  .story-box{background:var(--card);border-radius:var(--radius);border:1px solid rgba(255,255,255,.08);padding:20px 22px;margin-bottom:20px;position:relative;overflow:hidden;}
+  .story-box::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--accent);border-radius:4px 0 0 4px;}
+  .story-tag{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.12em;color:var(--accent);margin-bottom:8px;display:block;}
+  .story-box p{font-size:15px;line-height:1.7;color:#d4cfff;}
+  .story-box p+p{margin-top:8px;}
+
+  /* Questions */
+  .questions-area h3{font-size:13px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:14px;}
+  .question-block{margin-bottom:18px;}
+  .question-block .q-text{font-size:15px;font-weight:700;color:var(--text);margin-bottom:10px;line-height:1.4;}
+  .options{display:flex;flex-direction:column;gap:7px;}
+  .option{display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.04);border:1.5px solid rgba(255,255,255,.1);border-radius:10px;padding:10px 14px;cursor:pointer;transition:background .15s,border-color .15s;font-size:14px;color:#c8c2f2;line-height:1.35;}
+  .option:hover{background:rgba(167,139,250,.1);border-color:rgba(167,139,250,.3);}
+  .option.selected{background:rgba(167,139,250,.15);border-color:var(--purple);color:var(--text);}
+  .option.correct{background:rgba(67,233,123,.12);border-color:var(--green);color:#e6fff2;}
+  .option.wrong{background:rgba(255,107,107,.12);border-color:var(--accent2);color:#ffe0e0;}
+  .option-letter{width:22px;height:22px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;background:rgba(255,255,255,.1);flex-shrink:0;}
+
+  /* Check row */
+  .check-row{display:flex;justify-content:flex-end;margin-top:6px;margin-bottom:20px;}
+
+  /* Feedback */
+  .feedback{border-radius:12px;padding:12px 16px;margin-bottom:18px;font-size:14px;font-weight:700;display:none;align-items:center;gap:10px;line-height:1.4;}
+  .feedback.show{display:flex;}
+  .feedback.ok{background:rgba(67,233,123,.12);border:1px solid rgba(67,233,123,.3);color:#b6ffda;}
+  .feedback.err{background:rgba(255,107,107,.12);border:1px solid rgba(255,107,107,.3);color:#ffd0d0;}
+  .feedback .fb-icon{font-size:20px;flex-shrink:0;}
+
+  /* Code box */
+  .code-box{background:linear-gradient(135deg,rgba(247,201,72,.12),rgba(255,159,67,.08));border:1.5px solid rgba(247,201,72,.35);border-radius:var(--radius);padding:20px 24px;margin-bottom:18px;text-align:center;display:none;animation:fadeUp .4s ease both;}
+  .code-box.show{display:block;}
+  .code-box .code-label{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.14em;color:var(--accent);margin-bottom:6px;}
+  .code-box .code-value{font-family:'Bangers',cursive;font-size:48px;letter-spacing:.15em;color:var(--accent);text-shadow:0 0 20px rgba(247,201,72,.5);margin-bottom:6px;line-height:1.1;}
+  .code-box .code-hint{font-size:13px;color:var(--muted);}
+
+  /* Code entry */
+  .code-entry-section{background:var(--panel);border-radius:var(--radius);border:1px solid rgba(255,255,255,.08);padding:18px 22px;}
+  .code-entry-section h3{font-size:14px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:12px;}
+  .code-input-row{display:flex;gap:10px;flex-wrap:wrap;}
+  .code-input{flex:1;min-width:160px;background:rgba(255,255,255,.07);border:1.5px solid rgba(255,255,255,.12);border-radius:10px;padding:12px 16px;font-size:18px;font-family:'Bangers',cursive;letter-spacing:.1em;color:var(--accent);text-transform:uppercase;outline:none;transition:border-color .2s;}
+  .code-input:focus{border-color:var(--accent);}
+  .code-input.error{border-color:var(--accent2);animation:shake .3s ease;}
+  .code-error{font-size:13px;color:var(--accent2);margin-top:6px;display:none;font-weight:700;}
+  .code-error.show{display:block;}
+  @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+
+  /* Victory */
+  .victory{text-align:center;padding:40px 24px;background:var(--panel);border-radius:var(--radius);border:1px solid rgba(67,233,123,.25);position:relative;overflow:hidden;}
+  .victory::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 0%,rgba(67,233,123,.15) 0%,transparent 70%);pointer-events:none;}
+  .victory .trophy{font-size:72px;margin-bottom:10px;animation:bounce 1.2s ease infinite alternate;}
+  @keyframes bounce{from{transform:translateY(0)}to{transform:translateY(-10px)}}
+  .victory h1{font-family:'Bangers',cursive;font-size:50px;letter-spacing:.06em;color:var(--green);text-shadow:0 0 30px rgba(67,233,123,.4);margin-bottom:8px;}
+  .victory .detective-name{font-size:20px;color:var(--accent);font-weight:800;margin-bottom:10px;}
+  .victory .victory-msg{font-size:15px;color:var(--muted);max-width:440px;margin:0 auto 16px;line-height:1.6;}
+  .stars{font-size:32px;letter-spacing:6px;margin-bottom:16px;}
+
+  /* Candy box */
+  .candy-box{background:linear-gradient(135deg,rgba(255,107,107,.15),rgba(247,201,72,.1));border:2px solid rgba(255,107,107,.4);border-radius:var(--radius);padding:22px 24px;margin:18px 0 22px;text-align:center;}
+  .candy-box .candy-emoji{font-size:48px;margin-bottom:8px;}
+  .candy-box h2{font-family:'Bangers',cursive;font-size:28px;letter-spacing:.06em;color:#ff9f43;margin-bottom:6px;}
+  .candy-box p{font-size:15px;color:#ffd4a0;line-height:1.5;}
+
+  .summary-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px;}
+  .summary-card{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:14px 10px;}
+  .summary-card .sc-value{font-family:'Bangers',cursive;font-size:30px;color:var(--accent);}
+  .summary-card .sc-label{font-size:12px;color:var(--muted);margin-top:2px;}
+  .codes-recap{background:rgba(255,255,255,.04);border-radius:12px;padding:14px 16px;margin-bottom:20px;text-align:left;}
+  .codes-recap h4{font-size:12px;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);margin-bottom:8px;}
+  .code-recap-item{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.06);font-size:13px;}
+  .code-recap-item:last-child{border-bottom:none;}
+  .code-recap-item .cri-level{color:var(--muted);}
+  .code-recap-item .cri-code{font-family:'Bangers',cursive;letter-spacing:.1em;color:var(--accent);font-size:15px;}
+
+  /* Results */
+  .results-section{margin-top:24px;text-align:left;}
+  .results-section h3{font-size:13px;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);margin-bottom:12px;}
+  .result-level{margin-bottom:18px;}
+  .result-level-title{font-size:14px;font-weight:800;color:var(--text);margin-bottom:6px;padding-bottom:5px;border-bottom:1px solid rgba(255,255,255,.08);}
+  .result-row{display:flex;align-items:flex-start;gap:10px;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.05);font-size:13px;}
+  .result-row:last-child{border-bottom:none;}
+  .result-icon{font-size:14px;flex-shrink:0;margin-top:1px;}
+  .result-body{flex:1;}
+  .result-q{color:var(--muted);line-height:1.4;margin-bottom:2px;}
+  .result-a{font-weight:700;}
+  .result-a.ok{color:var(--green);}
+  .result-a.err{color:var(--accent2);}
+  .result-correct{font-size:12px;color:var(--muted);margin-top:1px;}
+
+  @media print{
+    body{background:#fff!important;color:#000!important;}
+    body::before{display:none;}
+    .progress-bar,.btn,.stars,.trophy,.candy-box{display:none!important;}
+    .victory{background:#fff!important;border:none!important;padding:0!important;}
+    .victory h1{color:#1a3a7a!important;text-shadow:none!important;font-size:28px!important;}
+    .detective-name,.victory-msg{color:#333!important;}
+    .summary-card{background:#eee!important;} .sc-value{color:#1a3a7a!important;} .sc-label{color:#555!important;}
+    .codes-recap{background:#f9f5e8!important;border:1px solid #ddd!important;}
+    .cri-level{color:#555!important;} .cri-code{color:#b8860b!important;}
+    .results-section h3{color:#777!important;}
+    .result-level-title{color:#222!important;border-color:#ccc!important;}
+    .result-q{color:#555!important;} .result-a.ok{color:#1a7a3a!important;} .result-a.err{color:#c0392b!important;}
+    .result-correct{color:#888!important;} .result-row{border-color:#eee!important;}
+    .result-level{page-break-inside:avoid;}
+    .screen:not(.active){display:none!important;}
+  }
+  @media(max-width:500px){
+    .summary-grid{grid-template-columns:1fr 1fr;}
+    .intro-hero h1{font-size:36px;}
+  }
+</style>
+</head>
+<body>
+<div class="wrapper">
+
+  <div class="progress-bar" id="progressBar" style="display:none;">
+    <span class="progress-label" id="progressLabel">Nivel 1 de 5</span>
+    <div class="progress-track"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+    <span class="progress-pct" id="progressPct">0%</span>
+  </div>
+
+  <!-- INTRO -->
+  <div class="screen active" id="screen-intro">
+    <div class="intro-hero">
+      <div class="badge">Unidad 6 · 3.er Grado · Inmersión Dual</div>
+      <div class="emoji-row">🔐🕵️🔑</div>
+      <h1>La Misión de las Decisiones</h1>
+      <p class="subtitle">¿Qué nos ayuda a resolver los problemas?</p>
+      <div class="mission-card">
+        <h3>📋 Tu misión</h3>
+        <p>Eres un detective de decisiones. Hay <strong>5 cuartos</strong> que resolver. Lee cada situación, responde las preguntas y consigue el código secreto para avanzar.</p>
+        <p>¡Piensa bien antes de responder! 🚀</p>
+      </div>
+      <div class="name-row">
+        <input type="text" id="detName" placeholder="Escribe tu nombre, detective..." maxlength="40"/>
+      </div>
+      <br>
+      <button class="btn btn-primary" onclick="startGame()">🔍 Comenzar la misión</button>
+    </div>
+  </div>
+
+  <!-- NIVEL 1 — CAFETERÍA -->
+  <div class="screen" id="screen-1">
+    <div class="level-header">
+      <div class="level-icon" style="background:rgba(255,107,107,.15);">🍽️</div>
+      <div class="level-header-text">
+        <h2>Nivel 1 — La cafetería</h2>
+        <p>Cuarto 1 de 5</p>
+      </div>
+    </div>
+    <div class="story-box">
+      <span class="story-tag">📖 Lee con atención</span>
+      <p>Tomás derrama su jugo encima del cuaderno de Sofía sin querer. Sofía se enoja y empieza a gritar.</p>
+      <p>¿Qué debe hacer Tomás?</p>
+    </div>
+    <div class="questions-area">
+      <h3>🔎 Responde</h3>
+      <div class="question-block">
+        <p class="q-text">1. ¿Cuál es el problema?</p>
+        <div class="options" id="q1-1">
+          <div class="option" onclick="selectOption(this,'q1-1','A')"><span class="option-letter">A</span> Sofía no tiene jugo.</div>
+          <div class="option" onclick="selectOption(this,'q1-1','B')"><span class="option-letter">B</span> Tomás derramó el jugo sobre el cuaderno de Sofía.</div>
+          <div class="option" onclick="selectOption(this,'q1-1','C')"><span class="option-letter">C</span> El maestro no quiere ayudar.</div>
+        </div>
+      </div>
+      <div class="question-block">
+        <p class="q-text">2. ¿Qué debe hacer Tomás?</p>
+        <div class="options" id="q1-2">
+          <div class="option" onclick="selectOption(this,'q1-2','A')"><span class="option-letter">A</span> Irse corriendo.</div>
+          <div class="option" onclick="selectOption(this,'q1-2','B')"><span class="option-letter">B</span> Gritar también.</div>
+          <div class="option" onclick="selectOption(this,'q1-2','C')"><span class="option-letter">C</span> Pedir disculpas y ayudar a limpiar.</div>
+        </div>
+      </div>
+      <div class="question-block">
+        <p class="q-text">3. Si Tomás pide disculpas, ¿qué pasará?</p>
+        <div class="options" id="q1-3">
+          <div class="option" onclick="selectOption(this,'q1-3','A')"><span class="option-letter">A</span> Sofía se enojará más.</div>
+          <div class="option" onclick="selectOption(this,'q1-3','B')"><span class="option-letter">B</span> Sofía se calmará y el problema se resolverá.</div>
+          <div class="option" onclick="selectOption(this,'q1-3','C')"><span class="option-letter">C</span> El maestro los castigará a los dos.</div>
+        </div>
+      </div>
+    </div>
+    <div class="check-row"><button class="btn btn-yellow" onclick="checkLevel(1)">✅ Verificar</button></div>
+    <div class="feedback" id="fb-1"></div>
+    <div class="code-box" id="code-1">
+      <div class="code-label">🔑 ¡Código desbloqueado!</div>
+      <div class="code-value">VALIENTE</div>
+      <div class="code-hint">Escribe este código para avanzar</div>
+    </div>
+    <div class="code-entry-section" id="entry-1" style="display:none;">
+      <h3>🔐 Ingresa el código — Nivel 2</h3>
+      <div class="code-input-row">
+        <input class="code-input" id="ci-1" placeholder="CÓDIGO..." maxlength="20" oninput="this.value=this.value.toUpperCase()"/>
+        <button class="btn btn-primary" onclick="unlockNext(1,'VALIENTE')">Entrar →</button>
+      </div>
+      <p class="code-error" id="ce-1">❌ Código incorrecto. ¡Intenta de nuevo!</p>
+    </div>
+  </div>
+
+  <!-- NIVEL 2 — RECREO -->
+  <div class="screen" id="screen-2">
+    <div class="level-header">
+      <div class="level-icon" style="background:rgba(56,197,245,.15);">⚽</div>
+      <div class="level-header-text">
+        <h2>Nivel 2 — El recreo</h2>
+        <p>Cuarto 2 de 5</p>
+      </div>
+    </div>
+    <div class="story-box" style="border-left-color:var(--blue);">
+      <span class="story-tag" style="color:var(--blue);">📖 Lee con atención</span>
+      <p>Valentina quiere jugar fútbol. Algunos niños le dicen que no puede. Valentina tiene pérdida auditiva.</p>
+      <p>Carlos es su amigo. Tiene que decidir qué hacer.</p>
+    </div>
+    <div class="questions-area">
+      <h3>🔎 Responde</h3>
+      <div class="question-block">
+        <p class="q-text">1. ¿Por qué no dejan jugar a Valentina?</p>
+        <div class="options" id="q2-1">
+          <div class="option" onclick="selectOption(this,'q2-1','A')"><span class="option-letter">A</span> Valentina no quiere jugar.</div>
+          <div class="option" onclick="selectOption(this,'q2-1','B')"><span class="option-letter">B</span> Dicen que no sabe jugar bien.</div>
+          <div class="option" onclick="selectOption(this,'q2-1','C')"><span class="option-letter">C</span> Ya hay demasiados jugadores.</div>
+        </div>
+      </div>
+      <div class="question-block">
+        <p class="q-text">2. ¿Qué debe hacer Carlos?</p>
+        <div class="options" id="q2-2">
+          <div class="option" onclick="selectOption(this,'q2-2','A')"><span class="option-letter">A</span> Ignorarlo y seguir jugando.</div>
+          <div class="option" onclick="selectOption(this,'q2-2','B')"><span class="option-letter">B</span> Hablar con los niños para que incluyan a Valentina.</div>
+          <div class="option" onclick="selectOption(this,'q2-2','C')"><span class="option-letter">C</span> Dejar de jugar él también.</div>
+        </div>
+      </div>
+      <div class="question-block">
+        <p class="q-text">3. ¿Qué significa integrar a Valentina?</p>
+        <div class="options" id="q2-3">
+          <div class="option" onclick="selectOption(this,'q2-3','A')"><span class="option-letter">A</span> Que espere al siguiente recreo.</div>
+          <div class="option" onclick="selectOption(this,'q2-3','B')"><span class="option-letter">B</span> Que gane el partido primero.</div>
+          <div class="option" onclick="selectOption(this,'q2-3','C')"><span class="option-letter">C</span> Incluirla y dejarla participar.</div>
+        </div>
+      </div>
+    </div>
+    <div class="check-row"><button class="btn btn-yellow" onclick="checkLevel(2)">✅ Verificar</button></div>
+    <div class="feedback" id="fb-2"></div>
+    <div class="code-box" id="code-2" style="border-color:rgba(56,197,245,.35);background:linear-gradient(135deg,rgba(56,197,245,.1),rgba(56,197,245,.05));">
+      <div class="code-label" style="color:var(--blue);">🔑 ¡Código desbloqueado!</div>
+      <div class="code-value" style="color:var(--blue);text-shadow:0 0 20px rgba(56,197,245,.5);">HONESTO</div>
+      <div class="code-hint">Escribe este código para avanzar</div>
+    </div>
+    <div class="code-entry-section" id="entry-2" style="display:none;">
+      <h3>🔐 Ingresa el código — Nivel 3</h3>
+      <div class="code-input-row">
+        <input class="code-input" id="ci-2" placeholder="CÓDIGO..." maxlength="20" oninput="this.value=this.value.toUpperCase()"/>
+        <button class="btn btn-primary" onclick="unlockNext(2,'HONESTO')">Entrar →</button>
+      </div>
+      <p class="code-error" id="ce-2">❌ Código incorrecto. ¡Intenta de nuevo!</p>
+    </div>
+  </div>
+
+  <!-- NIVEL 3 — BIBLIOTECA -->
+  <div class="screen" id="screen-3">
+    <div class="level-header">
+      <div class="level-icon" style="background:rgba(167,139,250,.15);">📚</div>
+      <div class="level-header-text">
+        <h2>Nivel 3 — La biblioteca</h2>
+        <p>Cuarto 3 de 5</p>
+      </div>
+    </div>
+    <div class="story-box" style="border-left-color:var(--purple);">
+      <span class="story-tag" style="color:var(--purple);">📖 Lee con atención</span>
+      <p>Ana y Marco hacen un proyecto juntos. Ana trabajó mucho. Marco no hizo su parte y quiere copiar el trabajo de Ana.</p>
+      <p>Ana tiene que decidir qué hacer.</p>
+    </div>
+    <div class="questions-area">
+      <h3>🔎 Responde</h3>
+      <div class="question-block">
+        <p class="q-text">1. ¿Cuál es el problema de Ana?</p>
+        <div class="options" id="q3-1">
+          <div class="option" onclick="selectOption(this,'q3-1','A')"><span class="option-letter">A</span> No sabe cómo hacer el proyecto.</div>
+          <div class="option" onclick="selectOption(this,'q3-1','B')"><span class="option-letter">B</span> Marco quiere copiar y eso no está bien.</div>
+          <div class="option" onclick="selectOption(this,'q3-1','C')"><span class="option-letter">C</span> La maestra le dio mucho trabajo.</div>
+        </div>
+      </div>
+      <div class="question-block">
+        <p class="q-text">2. ¿Qué debe hacer Ana?</p>
+        <div class="options" id="q3-2">
+          <div class="option" onclick="selectOption(this,'q3-2','A')"><span class="option-letter">A</span> Dejar que copie para no tener problemas.</div>
+          <div class="option" onclick="selectOption(this,'q3-2','B')"><span class="option-letter">B</span> Decirle que copiar no está bien y ofrecerle ayuda.</div>
+          <div class="option" onclick="selectOption(this,'q3-2','C')"><span class="option-letter">C</span> Entregar el proyecto sin hablarle.</div>
+        </div>
+      </div>
+      <div class="question-block">
+        <p class="q-text">3. ¿Qué puede pasar si Marco copia?</p>
+        <div class="options" id="q3-3">
+          <div class="option" onclick="selectOption(this,'q3-3','A')"><span class="option-letter">A</span> Marco aprenderá mucho.</div>
+          <div class="option" onclick="selectOption(this,'q3-3','B')"><span class="option-letter">B</span> Pueden sacar mala nota si la maestra se da cuenta.</div>
+          <div class="option" onclick="selectOption(this,'q3-3','C')"><span class="option-letter">C</span> La maestra los felicitará.</div>
+        </div>
+      </div>
+    </div>
+    <div class="check-row"><button class="btn btn-yellow" onclick="checkLevel(3)">✅ Verificar</button></div>
+    <div class="feedback" id="fb-3"></div>
+    <div class="code-box" id="code-3" style="border-color:rgba(167,139,250,.35);background:linear-gradient(135deg,rgba(167,139,250,.1),rgba(167,139,250,.05));">
+      <div class="code-label" style="color:var(--purple);">🔑 ¡Código desbloqueado!</div>
+      <div class="code-value" style="color:var(--purple);text-shadow:0 0 20px rgba(167,139,250,.5);">AMIGOS</div>
+      <div class="code-hint">Escribe este código para avanzar</div>
+    </div>
+    <div class="code-entry-section" id="entry-3" style="display:none;">
+      <h3>🔐 Ingresa el código — Nivel 4</h3>
+      <div class="code-input-row">
+        <input class="code-input" id="ci-3" placeholder="CÓDIGO..." maxlength="20" oninput="this.value=this.value.toUpperCase()"/>
+        <button class="btn btn-primary" onclick="unlockNext(3,'AMIGOS')">Entrar →</button>
+      </div>
+      <p class="code-error" id="ce-3">❌ Código incorrecto. ¡Intenta de nuevo!</p>
+    </div>
+  </div>
+
+  <!-- NIVEL 4 — SALÓN -->
+  <div class="screen" id="screen-4">
+    <div class="level-header">
+      <div class="level-icon" style="background:rgba(67,233,123,.15);">🏫</div>
+      <div class="level-header-text">
+        <h2>Nivel 4 — El salón</h2>
+        <p>Cuarto 4 de 5</p>
+      </div>
+    </div>
+    <div class="story-box" style="border-left-color:var(--green);">
+      <span class="story-tag" style="color:var(--green);">📖 Lee con atención</span>
+      <p>La maestra sale del salón. Pide que todos trabajen en silencio. Diego empieza a molestar a sus compañeros.</p>
+      <p>Lucía es la monitora. Tiene que decidir qué hacer.</p>
+    </div>
+    <div class="questions-area">
+      <h3>🔎 Responde</h3>
+      <div class="question-block">
+        <p class="q-text">1. ¿Qué debe hacer Lucía como monitora?</p>
+        <div class="options" id="q4-1">
+          <div class="option" onclick="selectOption(this,'q4-1','A')"><span class="option-letter">A</span> Unirse a Diego y divertirse.</div>
+          <div class="option" onclick="selectOption(this,'q4-1','B')"><span class="option-letter">B</span> Ayudar a mantener el orden.</div>
+          <div class="option" onclick="selectOption(this,'q4-1','C')"><span class="option-letter">C</span> Ignorar todo e hacer su tarea.</div>
+        </div>
+      </div>
+      <div class="question-block">
+        <p class="q-text">2. ¿Qué nos ayuda a resolver un problema?</p>
+        <div class="options" id="q4-2">
+          <div class="option" onclick="selectOption(this,'q4-2','A')"><span class="option-letter">A</span> Pensar solo en lo que queremos.</div>
+          <div class="option" onclick="selectOption(this,'q4-2','B')"><span class="option-letter">B</span> Pensar en las consecuencias y elegir lo mejor.</div>
+          <div class="option" onclick="selectOption(this,'q4-2','C')"><span class="option-letter">C</span> Esperar a que otro decida.</div>
+        </div>
+      </div>
+      <div class="question-block">
+        <p class="q-text">3. ¿Qué es la toma de decisiones?</p>
+        <div class="options" id="q4-3">
+          <div class="option" onclick="selectOption(this,'q4-3','A')"><span class="option-letter">A</span> Cuando alguien nos dice qué hacer.</div>
+          <div class="option" onclick="selectOption(this,'q4-3','B')"><span class="option-letter">B</span> Siempre es fácil y rápida.</div>
+          <div class="option" onclick="selectOption(this,'q4-3','C')"><span class="option-letter">C</span> Pensar en opciones y elegir la mejor.</div>
+        </div>
+      </div>
+    </div>
+    <div class="check-row"><button class="btn btn-yellow" onclick="checkLevel(4)">✅ Verificar</button></div>
+    <div class="feedback" id="fb-4"></div>
+    <div class="code-box" id="code-4" style="border-color:rgba(247,201,72,.35);">
+      <div class="code-label">🔑 ¡Código desbloqueado!</div>
+      <div class="code-value">DECISION</div>
+      <div class="code-hint">Escribe este código para el último cuarto</div>
+    </div>
+    <div class="code-entry-section" id="entry-4" style="display:none;">
+      <h3>🔐 Ingresa el código — Nivel Final</h3>
+      <div class="code-input-row">
+        <input class="code-input" id="ci-4" placeholder="CÓDIGO..." maxlength="20" oninput="this.value=this.value.toUpperCase()"/>
+        <button class="btn btn-primary" onclick="unlockNext(4,'DECISION')">Entrar →</button>
+      </div>
+      <p class="code-error" id="ce-4">❌ Código incorrecto. ¡Intenta de nuevo!</p>
+    </div>
+  </div>
+
+  <!-- NIVEL 5 — CASA -->
+  <div class="screen" id="screen-5">
+    <div class="level-header">
+      <div class="level-icon" style="background:rgba(247,201,72,.15);">🏠</div>
+      <div class="level-header-text">
+        <h2>Nivel Final — En casa</h2>
+        <p>Cuarto 5 de 5 · ¡Último reto!</p>
+      </div>
+    </div>
+    <div class="story-box" style="border-left-color:var(--accent);">
+      <span class="story-tag">📖 Lee con atención</span>
+      <p>Luisa llegó tarde a casa. Su mamá le pregunta por qué. Luisa puede decir la verdad o puede inventar una excusa.</p>
+      <p>¿Qué debe hacer Luisa?</p>
+    </div>
+    <div class="questions-area">
+      <h3>🔎 Responde</h3>
+      <div class="question-block">
+        <p class="q-text">1. ¿Cuál es la decisión de Luisa?</p>
+        <div class="options" id="q5-1">
+          <div class="option" onclick="selectOption(this,'q5-1','A')"><span class="option-letter">A</span> Decirle la verdad a su mamá.</div>
+          <div class="option" onclick="selectOption(this,'q5-1','B')"><span class="option-letter">B</span> Inventar una excusa.</div>
+          <div class="option" onclick="selectOption(this,'q5-1','C')"><span class="option-letter">C</span> No hablarle a su mamá.</div>
+        </div>
+      </div>
+      <div class="question-block">
+        <p class="q-text">2. ¿Cuál es la mejor acción?</p>
+        <div class="options" id="q5-2">
+          <div class="option" onclick="selectOption(this,'q5-2','A')"><span class="option-letter">A</span> Decir la verdad, aunque dé miedo.</div>
+          <div class="option" onclick="selectOption(this,'q5-2','B')"><span class="option-letter">B</span> Inventar una excusa para no tener problemas.</div>
+          <div class="option" onclick="selectOption(this,'q5-2','C')"><span class="option-letter">C</span> Esperar a que su mamá lo olvide.</div>
+        </div>
+      </div>
+      <div class="question-block">
+        <p class="q-text">3. Si Luisa dice la verdad, ¿qué puede pasar?</p>
+        <div class="options" id="q5-3">
+          <div class="option" onclick="selectOption(this,'q5-3','A')"><span class="option-letter">A</span> Su mamá nunca le hablará más.</div>
+          <div class="option" onclick="selectOption(this,'q5-3','B')"><span class="option-letter">B</span> Su mamá confiará más en ella.</div>
+          <div class="option" onclick="selectOption(this,'q5-3','C')"><span class="option-letter">C</span> No pasará nada.</div>
+        </div>
+      </div>
+    </div>
+    <div class="check-row"><button class="btn btn-yellow" onclick="checkLevel(5)">✅ Verificar</button></div>
+    <div class="feedback" id="fb-5"></div>
+    <div class="code-box" id="code-5" style="border-color:rgba(247,201,72,.4);background:linear-gradient(135deg,rgba(247,201,72,.15),rgba(255,159,67,.1));">
+      <div class="code-label">🔑 ¡Código final desbloqueado!</div>
+      <div class="code-value">CAMPEON</div>
+      <div class="code-hint">¡Ingresa este código para completar la misión!</div>
+    </div>
+    <div class="code-entry-section" id="entry-5" style="display:none;">
+      <h3>🏆 Ingresa el código final</h3>
+      <div class="code-input-row">
+        <input class="code-input" id="ci-5" placeholder="CÓDIGO FINAL..." maxlength="20" oninput="this.value=this.value.toUpperCase()"/>
+        <button class="btn btn-green" onclick="unlockNext(5,'CAMPEON')">🎉 ¡Completar! →</button>
+      </div>
+      <p class="code-error" id="ce-5">❌ Código incorrecto. ¡Ya casi llegas!</p>
+    </div>
+  </div>
+
+  <!-- VICTORIA -->
+  <div class="screen" id="screen-victory">
+    <div class="victory">
+      <div class="trophy">🏆</div>
+      <div class="stars">⭐⭐⭐⭐⭐</div>
+      <h1>¡Misión completada!</h1>
+      <p class="detective-name" id="victoryName">¡Felicidades, Detective!</p>
+      <p class="victory-msg">¡Resolviste los 5 cuartos! Eres un verdadero detective de decisiones.</p>
+
+      <div class="candy-box">
+        <div class="candy-emoji">🍭🍬🍫</div>
+        <h2>¡Ganaste un dulce!</h2>
+        <p>Muéstrale esta pantalla a tu maestra para reclamar tu premio. ¡Te lo mereces por tu gran trabajo!</p>
+      </div>
+
+      <div class="summary-grid">
+        <div class="summary-card">
+          <div class="sc-value">5/5</div>
+          <div class="sc-label">Cuartos resueltos</div>
+        </div>
+        <div class="summary-card">
+          <div class="sc-value" id="finalScore">15</div>
+          <div class="sc-label">Respuestas correctas</div>
+        </div>
+        <div class="summary-card">
+          <div class="sc-value">🕵️</div>
+          <div class="sc-label">Detective experto</div>
+        </div>
+      </div>
+
+      <div class="codes-recap">
+        <h4>🔑 Códigos desbloqueados</h4>
+        <div class="code-recap-item"><span class="cri-level">Nivel 1 — Cafetería</span><span class="cri-code">VALIENTE</span></div>
+        <div class="code-recap-item"><span class="cri-level">Nivel 2 — Recreo</span><span class="cri-code">HONESTO</span></div>
+        <div class="code-recap-item"><span class="cri-level">Nivel 3 — Biblioteca</span><span class="cri-code">AMIGOS</span></div>
+        <div class="code-recap-item"><span class="cri-level">Nivel 4 — Salón</span><span class="cri-code">DECISION</span></div>
+        <div class="code-recap-item"><span class="cri-level">Nivel 5 — Casa</span><span class="cri-code">CAMPEON</span></div>
+      </div>
+
+      <button class="btn btn-primary" onclick="restartGame()">🔄 Jugar de nuevo</button>
+      &nbsp;
+      <button class="btn btn-green" onclick="window.print()">🖨️ Imprimir</button>
+
+      <div class="results-section" id="resultsDetail"></div>
+    </div>
+  </div>
+
+</div>
+<script>
+let playerName="", selections={}, correctCount=0;
+
+const answers={
+  'q1-1':'B','q1-2':'C','q1-3':'B',
+  'q2-1':'B','q2-2':'B','q2-3':'C',
+  'q3-1':'B','q3-2':'B','q3-3':'B',
+  'q4-1':'B','q4-2':'B','q4-3':'C',
+  'q5-1':'A','q5-2':'A','q5-3':'B',
+};
+
+const questionData={
+  'q1-1':{q:'¿Cuál es el problema?',opts:{A:'Sofía no tiene jugo.',B:'Tomás derramó el jugo sobre el cuaderno de Sofía.',C:'El maestro no quiere ayudar.'}},
+  'q1-2':{q:'¿Qué debe hacer Tomás?',opts:{A:'Irse corriendo.',B:'Gritar también.',C:'Pedir disculpas y ayudar a limpiar.'}},
+  'q1-3':{q:'Si Tomás pide disculpas, ¿qué pasará?',opts:{A:'Sofía se enojará más.',B:'Sofía se calmará y el problema se resolverá.',C:'El maestro los castigará.'}},
+  'q2-1':{q:'¿Por qué no dejan jugar a Valentina?',opts:{A:'No quiere jugar.',B:'Dicen que no sabe jugar bien.',C:'Ya hay demasiados jugadores.'}},
+  'q2-2':{q:'¿Qué debe hacer Carlos?',opts:{A:'Ignorarlo y seguir jugando.',B:'Hablar para que incluyan a Valentina.',C:'Dejar de jugar él también.'}},
+  'q2-3':{q:'¿Qué significa integrar a Valentina?',opts:{A:'Que espere al siguiente recreo.',B:'Que gane el partido primero.',C:'Incluirla y dejarla participar.'}},
+  'q3-1':{q:'¿Cuál es el problema de Ana?',opts:{A:'No sabe hacer el proyecto.',B:'Marco quiere copiar y eso no está bien.',C:'La maestra le dio mucho trabajo.'}},
+  'q3-2':{q:'¿Qué debe hacer Ana?',opts:{A:'Dejar que copie.',B:'Decirle que copiar no está bien y ofrecerle ayuda.',C:'Entregar sin hablarle.'}},
+  'q3-3':{q:'¿Qué puede pasar si Marco copia?',opts:{A:'Marco aprenderá mucho.',B:'Pueden sacar mala nota.',C:'La maestra los felicitará.'}},
+  'q4-1':{q:'¿Qué debe hacer Lucía?',opts:{A:'Unirse a Diego.',B:'Ayudar a mantener el orden.',C:'Ignorar todo.'}},
+  'q4-2':{q:'¿Qué nos ayuda a resolver un problema?',opts:{A:'Pensar solo en lo que queremos.',B:'Pensar en consecuencias y elegir lo mejor.',C:'Esperar a que otro decida.'}},
+  'q4-3':{q:'¿Qué es la toma de decisiones?',opts:{A:'Cuando alguien nos dice qué hacer.',B:'Siempre es fácil y rápida.',C:'Pensar en opciones y elegir la mejor.'}},
+  'q5-1':{q:'¿Cuál es la decisión de Luisa?',opts:{A:'Decirle la verdad a su mamá.',B:'Inventar una excusa.',C:'No hablarle a su mamá.'}},
+  'q5-2':{q:'¿Cuál es la mejor acción?',opts:{A:'Decir la verdad, aunque dé miedo.',B:'Inventar una excusa.',C:'Esperar a que su mamá lo olvide.'}},
+  'q5-3':{q:'Si Luisa dice la verdad, ¿qué puede pasar?',opts:{A:'Su mamá nunca le hablará.',B:'Su mamá confiará más en ella.',C:'No pasará nada.'}},
+};
+
+const levelMeta=[
+  {icon:'🍽️',title:'Nivel 1 — La cafetería'},
+  {icon:'⚽', title:'Nivel 2 — El recreo'},
+  {icon:'📚',title:'Nivel 3 — La biblioteca'},
+  {icon:'🏫',title:'Nivel 4 — El salón'},
+  {icon:'🏠',title:'Nivel 5 — En casa'},
+];
+
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  const s=document.getElementById('screen-'+id);
+  if(s) s.classList.add('active');
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function updateProgress(level){
+  const bar=document.getElementById('progressBar');
+  if(level==='intro'||level==='victory'){bar.style.display='none';return;}
+  bar.style.display='flex';
+  const pct=Math.round((level-1)/5*100);
+  document.getElementById('progressFill').style.width=pct+'%';
+  document.getElementById('progressPct').textContent=pct+'%';
+  document.getElementById('progressLabel').textContent='Nivel '+level+' de 5';
+}
+
+function startGame(){
+  const inp=document.getElementById('detName');
+  playerName=inp.value.trim()||'Detective';
+  showScreen(1); updateProgress(1);
+}
+
+function selectOption(el,groupId,letter){
+  document.querySelectorAll('#'+groupId+' .option').forEach(o=>o.classList.remove('selected','correct','wrong'));
+  el.classList.add('selected');
+  selections[groupId]=letter;
+}
+
+function checkLevel(level){
+  const qs=[`q${level}-1`,`q${level}-2`,`q${level}-3`];
+  if(!qs.every(q=>selections[q])){ showFeedback(level,false,'⚠️ Responde todas las preguntas.'); return; }
+  let correct=0;
+  qs.forEach(qid=>{
+    const chosen=selections[qid],right=answers[qid];
+    document.querySelectorAll('#'+qid+' .option').forEach(opt=>{
+      const letter=opt.querySelector('.option-letter').textContent;
+      opt.classList.remove('selected');
+      if(letter===right) opt.classList.add('correct');
+      else if(letter===chosen&&chosen!==right) opt.classList.add('wrong');
+    });
+    if(chosen===right) correct++;
+  });
+  correctCount+=correct;
+  if(correct===3){
+    showFeedback(level,true,'🎉 ¡Perfecto! Las tres respuestas son correctas. ¡Código desbloqueado!');
+    document.getElementById('code-'+level).classList.add('show');
+    setTimeout(()=>{document.getElementById('entry-'+level).style.display='block';},600);
+    document.querySelectorAll(`#screen-${level} .btn-yellow`).forEach(b=>b.disabled=true);
+  } else {
+    const msgs={0:'💭 Ninguna correcta. Lee de nuevo con calma.',1:'🤔 Solo una correcta. ¡Casi!',2:'👏 Dos correctas. Revisa la que faltó.'};
+    showFeedback(level,false,msgs[correct]||'');
+  }
+}
+
+function showFeedback(level,ok,msg){
+  const fb=document.getElementById('fb-'+level);
+  fb.className='feedback show '+(ok?'ok':'err');
+  fb.innerHTML=`<span class="fb-icon">${ok?'✅':'❌'}</span><span>${msg}</span>`;
+}
+
+function unlockNext(fromLevel,expectedCode){
+  const inp=document.getElementById('ci-'+fromLevel);
+  const err=document.getElementById('ce-'+fromLevel);
+  if(inp.value.trim().toUpperCase()!==expectedCode){
+    inp.classList.add('error'); err.classList.add('show');
+    setTimeout(()=>inp.classList.remove('error'),400); return;
+  }
+  err.classList.remove('show'); inp.value='';
+  if(fromLevel<5){ showScreen(fromLevel+1); updateProgress(fromLevel+1); }
+  else{
+    buildResults();
+    showScreen('victory'); updateProgress('victory');
+    document.getElementById('victoryName').textContent='¡Felicidades, Detective '+playerName+'!';
+    document.getElementById('finalScore').textContent=correctCount;
+  }
+}
+
+function buildResults(){
+  const container=document.getElementById('resultsDetail');
+  const now=new Date().toLocaleDateString('es-ES',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  let html=`<h3>📋 Reporte — ${playerName} — ${now}</h3>`;
+  for(let lv=1;lv<=5;lv++){
+    const meta=levelMeta[lv-1];
+    html+=`<div class="result-level"><div class="result-level-title">${meta.icon} ${meta.title}</div>`;
+    for(let q=1;q<=3;q++){
+      const qid=`q${lv}-${q}`,chosen=selections[qid]||'—',correct=answers[qid],ok=chosen===correct;
+      const qData=questionData[qid];
+      html+=`<div class="result-row">
+        <span class="result-icon">${ok?'✅':'❌'}</span>
+        <div class="result-body">
+          <div class="result-q">${q}. ${qData.q}</div>
+          <div class="result-a ${ok?'ok':'err'}">(${chosen}) ${qData.opts[chosen]||'Sin respuesta'}</div>
+          ${!ok?`<div class="result-correct">Correcta: (${correct}) ${qData.opts[correct]}</div>`:''}
+        </div></div>`;
+    }
+    html+=`</div>`;
+  }
+  container.innerHTML=html;
+}
+
+function restartGame(){
+  selections={}; correctCount=0;
+  document.querySelectorAll('.option').forEach(o=>o.classList.remove('selected','correct','wrong'));
+  document.querySelectorAll('.feedback').forEach(f=>f.className='feedback');
+  document.querySelectorAll('.code-box').forEach(b=>b.classList.remove('show'));
+  document.querySelectorAll('[id^="entry-"]').forEach(e=>e.style.display='none');
+  document.querySelectorAll('.code-input').forEach(i=>i.value='');
+  document.querySelectorAll('.code-error').forEach(e=>e.classList.remove('show'));
+  document.querySelectorAll('.btn-yellow').forEach(b=>b.disabled=false);
+  document.getElementById('resultsDetail').innerHTML='';
+  showScreen('intro'); updateProgress('intro');
+}
+</script>
+</body>
+</html>
